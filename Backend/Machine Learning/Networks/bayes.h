@@ -1,19 +1,3 @@
-// Copyright 2020 Robert Carneiro, Derek Meer, Matthew Tabak, Eric Lujan
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-// associated documentation files (the "Software"), to deal in the Software without restriction,
-// including without limitation the rights to use, copy, modify, merge, publish, distribute,
-// sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all copies or
-// substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-// NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _GNAIVEBAYES
 #define _GNAIVEBAYES
 
@@ -28,31 +12,32 @@ namespace glades {
 class NaiveBayes
 {
 private:
+    // <class id, class probability> <C, P(C)>
+    std::map<int, double> classes;
 
-	// <class id, class probility> <C, P(C)>
-	std::map<int, double> classes;
+    // <class id, <attribute id, probability> > <C, <x, P(x|C)> >
+    std::map<int, std::map<int, double> > attributesPerClass;
 
-	// <class id, <attribute id, probability> > <C, <x, P(x|C)> >
-	std::map<int, std::map<int, double> > attributesPerClass;
+    // N-gram probabilities for text prediction
+    std::map<std::string, std::map<std::string, double> > ngram_probs;
+    int n_gram_size;
 
-	std::vector<OHE> OHEMaps;
+    std::vector<OHE> OHEMaps;
+
+    void preprocess(std::string& word);
 
 public:
-
-	NaiveBayes()
-	{
-		//
-	}
-
-	shmea::GTable import(const shmea::GList&);
-	shmea::GTable import(const shmea::GTable&);
-	void train(const shmea::GTable&);
-	int predict(const shmea::GList&);
-	void print() const;
-	void reset();
-
-	std::string getClassName(int) const;
+    NaiveBayes();
+    shmea::GTable import(const shmea::GList&);
+    shmea::GTable import(const shmea::GTable&);
+    void train(const shmea::GTable&);
+    int predict(const shmea::GList&);
+    std::string predict_string(const shmea::GList&);
+    void print() const;
+    void reset();
+    std::string getClassName(int) const;
 };
+
 };
 
 #endif
