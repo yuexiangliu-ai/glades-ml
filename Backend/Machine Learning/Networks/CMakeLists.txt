@@ -1,13 +1,17 @@
 set(Networks_src_files
-	metanetwork.cpp
-	metanetwork.h
-	network.cpp
-	network.h
-	RNN.cpp
-	RNN.h
-	bayes.cpp
-	bayes-optimizer.cpp
+    metanetwork.cpp
+    metanetwork.h
+    network.cpp
+    network.h
+    RNN.cpp
+    RNN.h
+    bayes.cpp
+    bayes-optimizer.cpp
 )
+
+# Include directories before library
+include_directories(/home/ubuntu/shmea/Backend/Database)
+
 add_library(Networks ${Networks_src_files})
 
 install(TARGETS Networks EXPORT gladesConfig

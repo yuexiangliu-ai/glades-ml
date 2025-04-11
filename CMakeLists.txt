@@ -1,70 +1,63 @@
 if(NOT (${CMAKE_BINARY_DIR} STREQUAL "${CMAKE_SOURCE_DIR}/build"))
-	message(FATAL_ERROR "Must be in \"build\" directory")
+    message(FATAL_ERROR "Must be in \"build\" directory")
 endif()
 
-set (CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" CACHE PATH "default install path" FORCE)
+set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" CACHE PATH "default install path" FORCE)
 file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/include)
 
-#Init
+# Init
 cmake_minimum_required(VERSION 3.5.1)
 set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-#Compiler Flags
-#set(DEFAULT_BUILD_TYPE "Release")
+# Compiler Flags
 set(CMAKE_BUILD_TYPE Debug) # -g
-
-if(WIN32)
-	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
-else()
-	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC") # its set below
-	set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused-variable -Wno-unused-parameter")
-endif()
-
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused-variable -Wno-unused-parameter")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
-#Project
+# Project
 project(glades)
 set(G_VERSION_MAJOR 0)
 set(G_VERSION_MINOR 57)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to '${DEFAULT_BUILD_TYPE}' as none was specified.")
-  set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}" CACHE STRING "Choose the type of build." FORCE)
-  # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+    message(STATUS "Setting build type to 'Release' as none was specified.")
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-#Import libs
+# Import libs
 find_package(shmea REQUIRED)
 
 include(GNUInstallDirs)
 
-#Subdirectories
+# Include directories (global)
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories("include")
 include_directories("services")
-add_subdirectory("Backend/Machine Learning")
+include_directories(/home/ubuntu/shmea/Backend/Database)  # For shmea headers
 
+# Subdirectories
+add_subdirectory("Backend/Machine Learning")
+add_subdirectory("unit-tests")  # Add this line here
+
+# Source files for the library
 set(MAIN_SRC_FILES
-	main.cpp
-	main.h
+    main.cpp
+    main.h
 )
 
+# Build the shared library
 add_library(${PROJECT_NAME} SHARED ${MAIN_SRC_FILES})
 
-#Link libraries
+# Link libraries
 target_link_libraries(${PROJECT_NAME}
-	ML GNet DB) #custom libs
+    ML GNet DB) # Custom libs
 
-target_include_directories(glades PRIVATE "include")
-target_include_directories(glades PRIVATE "Backend")
+target_include_directories(${PROJECT_NAME} PRIVATE "include")
+target_include_directories(${PROJECT_NAME} PRIVATE "Backend")
 
-#target_include_directories(${PROJECT_NAME} PUBLIC
-#    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#    $<INSTALL_INTERFACE:include>
-#    PRIVATE Backend)
-
+# Install rules
 install(TARGETS ${PROJECT_NAME} EXPORT gladesConfig
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -75,42 +68,37 @@ install(EXPORT gladesConfig DESTINATION share/glades/cmake)
 
 export(TARGETS ${PROJECT_NAME} FILE gladesConfig.cmake)
 
-#make fmt
+# Custom targets
 add_custom_target(fmt
-	COMMAND ./clang-format-all
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ./clang-format-all
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-#make local
 add_custom_target(local
-	COMMAND ${PROJECT_NAME} local
-	DEPENDS ${PROJECT_NAME}
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${PROJECT_NAME} local
+    DEPENDS ${PROJECT_NAME}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-#make debug
 add_custom_target(debug
-	COMMAND gdb ./build/${PROJECT_NAME}
-	DEPENDS ${PROJECT_NAME}
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND gdb ./build/${PROJECT_NAME}
+    DEPENDS ${PROJECT_NAME}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-#make mem
-	add_custom_target(mem
-	COMMAND valgrind --leak-check=full --track-origins=yes ./build/${PROJECT_NAME}
-	DEPENDS ${PROJECT_NAME}
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+add_custom_target(mem
+    COMMAND valgrind --leak-check=full --track-origins=yes ./build/${PROJECT_NAME}
+    DEPENDS ${PROJECT_NAME}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-#make profile
-	add_custom_target(profile
-	COMMAND valgrind --tool=callgrind ./build/${PROJECT_NAME}
-	DEPENDS ${PROJECT_NAME}
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+add_custom_target(profile
+    COMMAND valgrind --tool=callgrind ./build/${PROJECT_NAME}
+    DEPENDS ${PROJECT_NAME}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-#make uninstall
-	add_custom_target(uninstall
-	COMMAND xargs rm < ./build/install_manifest.txt
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+add_custom_target(uninstall
+    COMMAND xargs rm < ./build/install_manifest.txt
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
